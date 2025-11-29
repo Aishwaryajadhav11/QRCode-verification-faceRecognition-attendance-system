@@ -52,5 +52,5 @@ Smart-Attendance-System/
 │   ├── database/
 │   └── main.py
 ├── requirements.txt
-└── LICENSE```
+└── LICENSE
 
