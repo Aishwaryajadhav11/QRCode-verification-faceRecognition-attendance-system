@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Create Lecture</h1>
+<form method="post" action="{{ url_for('create_lecture') }}" id="lecForm">
+  <div class="mb-3">
+    <label class="form-label">Lecture ID</label>
+    <input type="text" class="form-control" name="lecture_id" value="{{ suggested_id }}" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Lecture Name</label>
+    <input type="text" class="form-control" name="lecture_name" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Room No</label>
+    <input type="text" class="form-control" name="room_no" required>
+  </div>
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <label class="form-label">Date</label>
+      <input type="date" class="form-control" name="date" required>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">Start Time</label>
+      <input type="time" class="form-control" name="time" required>
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">End Time</label>
+      <input type="time" class="form-control" name="end_time" required>
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Location</label>
+    <div class="alert alert-warning" id="geoAlert" style="display: none;"></div>
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <button type="button" class="btn btn-primary" id="geoBtn">Use Current Location</button>
+    </div>
+    <div id="geoStatus" class="form-text">Click "Use Current Location" to get your current coordinates.</div>
+  </div>
+  <input type="hidden" name="lat" id="lat">
+  <input type="hidden" name="lng" id="lng">
+  <button type="submit" class="btn btn-primary">Create</button>
+  <a href="{{ url_for('list_lectures') }}" class="btn btn-link">View All Lectures</a>
+</form>
+<script>
+  const geoBtn = document.getElementById('geoBtn');
+  const latEl = document.getElementById('lat');
+  const lngEl = document.getElementById('lng');
+  const statusEl = document.getElementById('geoStatus');
+  const alertEl = document.getElementById('geoAlert');
+  
+  function setStatus(t){ statusEl.textContent = t; }
+  
+  function showAlert(msg, type = 'warning'){
+    if(alertEl){
+      alertEl.innerHTML = msg.replace(/\n/g, '<br>');
+      alertEl.className = 'alert alert-' + type;
+      alertEl.style.display = 'block';
+      if(type === 'success'){
+        setTimeout(() => {
+          alertEl.style.display = 'none';
+        }, 5000);
+      }
+    }
+  }
+  
+  function hideAlert(){
+    if(alertEl) alertEl.style.display = 'none';
+  }
+  
+  function getLoc(){
+    if(!navigator.geolocation){ 
+      setStatus('Geolocation not supported by your browser');
+      showAlert('Your browser does not support location services.');
+      return; 
+    }
+    
+    setStatus('Requesting location permission...');
+    hideAlert();
+    geoBtn.disabled = true;
+    
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        latEl.value = pos.coords.latitude;
+        lngEl.value = pos.coords.longitude;
+        const acc = pos.coords.accuracy || 0;
+        setStatus('✓ Location obtained: Lat ' + pos.coords.latitude.toFixed(6) + ', Lng ' + pos.coords.longitude.toFixed(6) + ' (±' + acc.toFixed(1) + ' m)');
+        showAlert('Location access granted!', 'success');
+        geoBtn.disabled = false;
+      }, 
+      function(err){
+        geoBtn.disabled = false;
+        
+        console.error('Geolocation error:', err);
+        
+        let errorMsg = '';
+        let alertMsg = '';
+        
+        if(err.code === 1){
+          // Permission denied
+          errorMsg = 'Location permission denied';
+          alertMsg = 'Location access was denied. To enable it:\n\n' +
+            '📱 Mobile (Chrome/Edge):\n' +
+            '  1. Tap the three dots (⋮) in the address bar\n' +
+            '  2. Go to "Site settings" or "Permissions"\n' +
+            '  3. Find "Location" and select "Allow"\n' +
+            '  4. Refresh the page and click "Use Current Location" again\n\n' +
+            '💻 Desktop (Chrome/Edge):\n' +
+            '  1. Click the lock icon (🔒) or info icon (i) in the address bar\n' +
+            '  2. Click "Site settings"\n' +
+            '  3. Find "Location" and change to "Allow"\n' +
+            '  4. Refresh the page and click "Use Current Location" again\n\n' +
+            '🦊 Firefox:\n' +
+            '  1. Click the shield icon in the address bar\n' +
+            '  2. Click "Permissions" → "Location"\n' +
+            '  3. Select "Allow" and refresh the page\n\n' +
+            '🍎 Safari:\n' +
+            '  1. Safari → Settings → Websites → Location\n' +
+            '  2. Find this website and select "Allow"\n' +
+            '  3. Refresh the page and click "Use Current Location" again';
+          showAlert(alertMsg, 'danger');
+        } else if(err.code === 2){
+          // Position unavailable
+          errorMsg = 'Location unavailable';
+          alertMsg = 'Unable to determine your location. Please:\n' +
+            '• Ensure GPS is enabled on your device\n' +
+            '• Check that you have internet connection\n' +
+            '• Try moving to an area with better signal';
+          showAlert(alertMsg, 'warning');
+        } else if(err.code === 3){
+          // Timeout
+          errorMsg = 'Location request timed out';
+          alertMsg = 'Location request took too long. Please:\n' +
+            '• Check your GPS signal\n' +
+            '• Ensure location services are enabled\n' +
+            '• Try again';
+          showAlert(alertMsg, 'warning');
+        } else {
+          errorMsg = 'Location error: ' + (err.message || 'Unknown error (code: ' + (err.code || 'N/A') + ')');
+          alertMsg = 'An error occurred while getting your location:\n\n' + errorMsg + '\n\nPlease try:\n' +
+            '• Refreshing the page\n' +
+            '• Checking browser permissions\n' +
+            '• Ensuring you are using HTTPS (required for location on mobile)';
+          showAlert(alertMsg, 'danger');
+        }
+        
+        setStatus('❌ ' + errorMsg);
+      }, 
+      { enableHighAccuracy: true, maximumAge: 60000, timeout: 20000 }
+    );
+  }
+  
+  // Check HTTPS requirement
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      setStatus('⚠ Location requires HTTPS on mobile devices');
+      showAlert('Location access requires HTTPS on mobile devices. Please access this page via https:// or use localhost for testing.', 'warning');
+    }
+  }
+  
+  geoBtn.addEventListener('click', getLoc);
+  // Don't auto-request location on page load - wait for user click
+</script>
+{% endblock %}

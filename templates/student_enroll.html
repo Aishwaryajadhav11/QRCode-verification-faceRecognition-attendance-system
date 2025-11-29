@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}Enroll Your Face - Proxy Scan{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="text-center mb-4">
+      <i class="fas fa-user-plus mb-3" style="font-size: 3rem; color: var(--brand);"></i>
+      <h1 class="display-5 fw-bold">Enroll Your Face</h1>
+      <p class="text-muted">Upload your photos for face recognition verification</p>
+    </div>
+
+    {% if error %}
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+      </div>
+    {% endif %}
+    {% if ok %}
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i>
+        Uploaded {{ saved }} image(s) for roll <strong>{{ roll }}</strong>. You can now verify on the scan page.
+      </div>
+    {% endif %}
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="fas fa-camera me-2"></i>Student Information & Photos
+      </div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" id="enrollForm">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">
+                <i class="fas fa-id-card me-2"></i>Roll No
+              </label>
+              <input type="text" class="form-control" name="roll_no" placeholder="e.g. 23CS001" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">
+                <i class="fas fa-user me-2"></i>Name
+              </label>
+              <input type="text" class="form-control" name="name" placeholder="Your full name (optional)">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">
+                <i class="fas fa-envelope me-2"></i>Email
+              </label>
+              <input type="email" class="form-control" name="email" placeholder="your.email@example.com (optional)">
+            </div>
+            <div class="col-12">
+              <label class="form-label">
+                <i class="fas fa-images me-2"></i>Face Photos
+              </label>
+              
+              <!-- Enhanced Image Upload Area -->
+              <div class="image-upload-container" id="imageUploadArea">
+                <input type="file" class="image-upload-input" name="photos" accept="image/jpeg,image/png,image/jpg" multiple required id="photoInput">
+                <div class="image-upload-content">
+                  <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                  <h5>Drag & Drop Photos Here</h5>
+                  <p class="text-muted mb-2">or click to browse files</p>
+                  <small class="text-muted">JPG, PNG • Max 10MB each • 5-10 photos recommended</small>
+                </div>
+              </div>
+              
+              <!-- Image Preview Area -->
+              <div class="image-preview-container" id="imagePreviewContainer"></div>
+              
+              <!-- Upload Progress -->
+              <div class="upload-progress" id="uploadProgress" style="display: none;">
+                <div class="upload-progress-bar" id="uploadProgressBar"></div>
+              </div>
+              
+              <div class="form-text mt-2">
+                <i class="fas fa-info-circle me-1"></i>
+                Upload 5–10 clear frontal photos with good lighting. Face should be large in frame.
+              </div>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                <i class="fas fa-upload me-2"></i>Upload & Enroll
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <div class="fw-bold mb-1">Tips for best accuracy</div>
+      <div>- Neutral background and good lighting (avoid backlight).</div>
+      <div>- Keep your face centered and occupy most of the frame.</div>
+      <div>- Include a few angles (slight left/right) and neutral expression.</div>
+    </div>
+
+    <div class="text-center">
+      <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">
+        <i class="fas fa-arrow-left me-2"></i>Back to Home
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('imageUploadArea');
+    const photoInput = document.getElementById('photoInput');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const submitBtn = document.getElementById('submitBtn');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const uploadProgressBar = document.getElementById('uploadProgressBar');
+    
+    let selectedFiles = [];
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = Array.from(e.dataTransfer.files);
+        handleFiles(files);
+    });
+    
+    // File input change
+    photoInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        handleFiles(files);
+    });
+    
+    function handleFiles(files) {
+        // Filter image files
+        const imageFiles = files.filter(file => {
+            return file.type.startsWith('image/') && 
+                   (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg');
+        });
+        
+        // Add to selected files
+        selectedFiles = [...selectedFiles, ...imageFiles];
+        
+        // Update preview
+        updatePreview();
+        
+        // Update submit button
+        updateSubmitButton();
+    }
+    
+    function updatePreview() {
+        previewContainer.innerHTML = '';
+        
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'image-preview';
+                previewDiv.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview ${index + 1}">
+                    <button type="button" class="image-preview-remove" onclick="removeImage(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                previewContainer.appendChild(previewDiv);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // Update upload area text
+        if (selectedFiles.length > 0) {
+            const uploadContent = uploadArea.querySelector('.image-upload-content');
+            uploadContent.innerHTML = `
+                <i class="fas fa-images image-upload-icon"></i>
+                <h5>${selectedFiles.length} Photo(s) Selected</h5>
+                <p class="text-muted mb-2">Click to add more or drag & drop</p>
+                <small class="text-muted">JPG, PNG • Max 10MB each</small>
+            `;
+        }
+    }
+    
+    function updateSubmitButton() {
+        submitBtn.disabled = selectedFiles.length === 0;
+        if (selectedFiles.length > 0) {
+            submitBtn.innerHTML = `<i class="fas fa-upload me-2"></i>Upload ${selectedFiles.length} Photo(s) & Enroll`;
+        } else {
+            submitBtn.innerHTML = `<i class="fas fa-upload me-2"></i>Upload & Enroll`;
+        }
+    }
+    
+    // Global function to remove images
+    window.removeImage = function(index) {
+        selectedFiles.splice(index, 1);
+        updatePreview();
+        updateSubmitButton();
+        
+        // Update file input
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        photoInput.files = dt.files;
+    };
+    
+    // Form submission with progress
+    document.getElementById('enrollForm').addEventListener('submit', function(e) {
+        if (selectedFiles.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one photo to upload.');
+            return;
+        }
+        
+        // Update file input with selected files
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        photoInput.files = dt.files;
+        
+        // Show progress bar
+        uploadProgress.style.display = 'block';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+        
+        // Simulate progress (since we can't track actual upload progress easily)
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress > 90) progress = 90;
+            uploadProgressBar.style.width = progress + '%';
+        }, 200);
+        
+        // Clean up on form submission
+        setTimeout(() => {
+            clearInterval(progressInterval);
+            uploadProgressBar.style.width = '100%';
+        }, 1000);
+    });
+});
+</script>
+
+{% endblock %}

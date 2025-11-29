@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+{% block title %}Scan Attendance - Proxy Scan{% endblock %}
+{% block content %}
+  <div class="text-center mb-4">
+    <i class="fas fa-qrcode mb-3" style="font-size: 3rem; color: var(--brand-3);"></i>
+    <h1 class="display-5 fw-bold mb-2">Scan Attendance</h1>
+    <p class="text-muted mb-0">Follow the steps below to mark your attendance securely.</p>
+  </div>
+{% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+{% else %}
+  <div class="alert alert-info mb-4">
+    <div class="fw-bold mb-1">How it works</div>
+    <div class="small mb-1">1. Fill in your details, 2. Allow location access, 3. Verify your face (if required), 4. Your attendance is marked automatically.</div>
+    <div>- Enter your <strong>Name</strong> and <strong>Roll No</strong> (case-insensitive). Suggestions appear as you type.</div>
+    <div>- Allow <strong>Location</strong> permission. Use an <strong>HTTPS</strong> link on mobile.</div>
+    {% if require_face %}
+    <div>- Tap <strong>Start Camera</strong>, center your face in good light, then tap <strong>Verify Face</strong>.</div>
+    {% endif %}
+  </div>
+
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
+      <div>
+        <h5 class="card-title mb-1">
+          <span class="badge bg-primary me-2"><i class="fas fa-chalkboard-teacher me-1"></i>Lecture</span>
+          {{ lecture.lectureName }}
+        </h5>
+        <p class="card-text mb-0 text-muted">
+          <i class="fas fa-door-open me-2"></i><strong>Room:</strong> {{ lecture.roomNo }}
+        </p>
+      </div>
+      <div class="mt-3 mt-md-0 text-md-end">
+        <div class="small text-muted">Step 1 of 3</div>
+        <div class="progress" style="width: 160px; height: 6px;">
+          <div class="progress-bar bg-success" role="progressbar" style="width: 33%;" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <div class="mb-3 pb-2 border-bottom">
+            <span class="badge bg-secondary me-2">Step 1</span>
+            <span class="fw-semibold">Your Details</span>
+            <div class="small text-muted">Make sure your roll number matches the one used for face enrollment.</div>
+          </div>
+          <form method="post" action="{{ url_for('mark_attendance') }}" id="scanForm">
+            <div class="mb-3">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" name="name" placeholder="Enter your full name" required>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Roll No</label>
+              <input type="text" class="form-control" name="roll_no" id="rollInput" list="enrolledList" placeholder="e.g. CS23XX001" required>
+              <div class="form-text" id="rollStatus"></div>
+            </div>
+            <div class="mb-3 pb-2 border-bottom">
+              <span class="badge bg-secondary me-2">Step 2</span>
+              <span class="fw-semibold">Location Access</span>
+              <div class="small text-muted">We only use your location to confirm that you are inside or near the classroom.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Location Permission</label>
+              <div class="alert alert-warning" id="locAlert" style="display: none;"></div>
+              <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <button type="button" class="btn btn-outline-primary" id="requestLocBtn">
+                  <i class="fas fa-location-arrow me-1"></i>Allow Location Access
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="retryLocBtn" style="display: none;">
+                  <i class="fas fa-sync-alt me-1"></i>Retry Location
+                </button>
+              </div>
+              <div class="form-text" id="locStatus">Click "Allow Location Access" to enable location tracking for attendance.</div>
+            </div>
+            <input type="hidden" name="lid" value="{{ lecture_id }}">
+            <input type="hidden" name="t" value="{{ token }}">
+            <input type="hidden" name="lat" id="lat">
+            <input type="hidden" name="lng" id="lng">
+            <input type="hidden" name="accuracy" id="accuracy">
+            {% if require_face %}
+            <input type="hidden" name="face_token" id="faceToken">
+            <datalist id="enrolledList"></datalist>
+            {% endif %}
+            <div class="mt-4 d-grid">
+              <button type="submit" id="submitBtn" class="btn btn-success" disabled>
+                <i class="fas fa-check-circle me-1"></i>Mark Attendance
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      {% if require_face %}
+      <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column">
+          <div class="mb-3 pb-2 border-bottom">
+            <span class="badge bg-secondary me-2">Step 3</span>
+            <span class="fw-semibold">Face Verification</span>
+            <div class="small text-muted">Use your front camera in good lighting. Keep your face centered in the frame.</div>
+          </div>
+          <div class="ratio ratio-4x3 mb-3" style="background:#000;border-radius:.5rem;overflow:hidden;">
+            <video id="camVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
+          </div>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <button class="btn btn-outline-secondary" id="startCamBtn" type="button">
+              <i class="fas fa-video me-1"></i>Start Camera
+            </button>
+            <button class="btn btn-primary" id="verifyBtn" type="button" disabled>
+              <span class="spinner-border spinner-border-sm d-none" id="verSpin" role="status" aria-hidden="true"></span>
+              <span id="verText">Verify Face</span>
+            </button>
+          </div>
+          <div id="faceStatus" class="form-text mb-2">Enter Roll No, start camera, then Verify Face.</div>
+          <canvas id="snapCanvas" width="400" height="300" class="d-none"></canvas>
+          <div class="mt-auto small text-muted pt-2 border-top">
+            <i class="fas fa-lock me-1"></i>Your face data is used only for verification and stays within the institution's system.
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <script>
+    const latEl = document.getElementById('lat');
+    const lngEl = document.getElementById('lng');
+    const accEl = document.getElementById('accuracy');
+    const locStatusEl = document.getElementById('locStatus');
+    const submitBtn = document.getElementById('submitBtn');
+    const retryLocBtn = document.getElementById('retryLocBtn');
+    const formEl = document.getElementById('scanForm');
+    const faceTokenEl = document.getElementById('faceToken');
+    const nameField = document.querySelector('input[name="name"]');
+    const rollField = document.getElementById('rollInput');
+    const requireFace = {{ require_face | tojson }};
+    let hasLocation = false;
+    let hasFace = !requireFace; // if face not required, treat as satisfied
+    let didSubmit = false;
+
+    function updateSubmitState(){
+      const faceOk = hasFace && (!requireFace || (faceTokenEl && faceTokenEl.value));
+      const fieldsOk = (!!nameField && nameField.value.trim().length > 0) && (!!rollField && rollField.value.trim().length > 0);
+      const ready = hasLocation && faceOk && fieldsOk;
+      submitBtn.disabled = !ready;
+      if (ready && !didSubmit && formEl) {
+        didSubmit = true;
+        try {
+          // Try a real button click to satisfy some browsers
+          submitBtn.disabled = false;
+          submitBtn.click();
+        } catch(e) {}
+        // Fallbacks
+        if (typeof formEl.requestSubmit === 'function') { formEl.requestSubmit(); }
+        else { formEl.submit(); }
+      }
+    }
+
+    if (nameField) nameField.addEventListener('input', updateSubmitState);
+    if (rollField) rollField.addEventListener('input', updateSubmitState);
+    setInterval(updateSubmitState, 1000);
+
+    function setLocStatus(t){ locStatusEl.textContent = t; }
+    function showLocAlert(msg, type = 'warning'){
+      const alertEl = document.getElementById('locAlert');
+      if(alertEl){
+        // Convert newlines to HTML line breaks
+        alertEl.innerHTML = msg.replace(/\n/g, '<br>');
+        alertEl.className = 'alert alert-' + type;
+        alertEl.style.display = 'block';
+        // Auto-hide success messages after 5 seconds
+        if(type === 'success'){
+          setTimeout(() => {
+            alertEl.style.display = 'none';
+          }, 5000);
+        }
+      }
+    }
+    function hideLocAlert(){
+      const alertEl = document.getElementById('locAlert');
+      if(alertEl) alertEl.style.display = 'none';
+    }
+    
+    // Check if location is available and show helpful messages
+    function checkLocationSupport(){
+      if (!navigator.geolocation) {
+        setLocStatus('❌ Geolocation not supported by your browser');
+        showLocAlert('Your browser does not support location services. Please use a modern browser like Chrome, Firefox, Safari, or Edge.', 'danger');
+        document.getElementById('requestLocBtn').disabled = true;
+        return false;
+      }
+      
+      // Check HTTPS requirement for mobile
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          setLocStatus('⚠ Location requires HTTPS on mobile devices');
+          showLocAlert('Location access requires HTTPS on mobile devices. Please access this page via https:// or use localhost for testing.', 'warning');
+        }
+      }
+      return true;
+    }
+
+    // Check if location permission is already granted
+    async function checkAndRequestIfGranted(){
+      if (!navigator.permissions) {
+        // Permissions API not supported, skip auto-request
+        return false;
+      }
+      
+      try {
+        const result = await navigator.permissions.query({ name: 'geolocation' });
+        if (result.state === 'granted') {
+          // Permission already granted, automatically get location
+          setLocStatus('Location permission already granted. Getting location...');
+          getLoc();
+          return true;
+        } else if (result.state === 'denied') {
+          // Permission denied, show message
+          setLocStatus('Location permission denied. Please enable it in browser settings.');
+          showLocAlert('Location permission is currently denied. Please enable it in your browser settings to use location features.', 'warning');
+          return false;
+        }
+        // State is 'prompt' - will show prompt on click
+        return false;
+      } catch (e) {
+        // Permissions API query failed, skip auto-request
+        console.log('Permission check not available:', e);
+        return false;
+      }
+    }
+
+    function getLoc(){
+      if(!checkLocationSupport()) {
+        return;
+      }
+      setLocStatus('Requesting location permission...');
+      hideLocAlert();
+      document.getElementById('requestLocBtn').disabled = true;
+      
+      navigator.geolocation.getCurrentPosition(
+        function(pos){
+          latEl.value = pos.coords.latitude;
+          lngEl.value = pos.coords.longitude;
+          const acc = pos.coords.accuracy || 0;
+          accEl.value = acc;
+          setLocStatus('✓ Location obtained: Lat ' + pos.coords.latitude.toFixed(6) + ', Lng ' + pos.coords.longitude.toFixed(6) + ' (±' + acc.toFixed(1) + ' m)');
+          hasLocation = true;
+          updateSubmitState();
+          document.getElementById('requestLocBtn').style.display = 'none';
+          document.getElementById('requestLocBtn').disabled = false;
+          document.getElementById('retryLocBtn').style.display = 'inline-block';
+          showLocAlert('Location obtained successfully! You can now mark attendance.', 'success');
+        }, 
+        function(err){
+          hasLocation = false;
+          updateSubmitState();
+          document.getElementById('requestLocBtn').style.display = 'inline-block';
+          document.getElementById('requestLocBtn').disabled = false;
+          document.getElementById('retryLocBtn').style.display = 'none';
+          
+          // Log error for debugging
+          console.error('Geolocation error:', err);
+          
+          let errorMsg = '';
+          let alertMsg = '';
+          
+          if(err.code === 1){
+            // Permission denied
+            errorMsg = 'Location permission denied';
+            alertMsg = 'Location access was denied. To enable it:\n\n' +
+              '• Chrome/Edge: Click the lock icon (🔒) in the address bar → Site settings → Location → Allow\n' +
+              '• Firefox: Click the shield icon → Permissions → Location → Allow\n' +
+              '• Safari: Safari → Settings → Websites → Location → Allow\n' +
+              '• Mobile: Go to browser settings → Site permissions → Location → Allow\n\n' +
+              'After enabling, click "Allow Location Access" again.';
+            showLocAlert(alertMsg, 'danger');
+          } else if(err.code === 2){
+            // Position unavailable
+            errorMsg = 'Location unavailable';
+            alertMsg = 'Unable to determine your location. Please:\n' +
+              '• Ensure GPS is enabled on your device\n' +
+              '• Check that you have internet connection\n' +
+              '• Try moving to an area with better signal\n' +
+              '• On desktop, ensure location services are enabled in system settings';
+            showLocAlert(alertMsg, 'warning');
+          } else if(err.code === 3){
+            // Timeout
+            errorMsg = 'Location request timed out';
+            alertMsg = 'Location request took too long. Please:\n' +
+              '• Check your GPS signal\n' +
+              '• Ensure location services are enabled\n' +
+              '• Try again (timeout may be due to slow GPS lock)';
+            showLocAlert(alertMsg, 'warning');
+          } else {
+            errorMsg = 'Location error: ' + (err.message || 'Unknown error (code: ' + (err.code || 'N/A') + ')');
+            alertMsg = 'An error occurred while getting your location:\n\n' + errorMsg + '\n\nPlease try:\n' +
+              '• Refreshing the page\n' +
+              '• Checking browser permissions\n' +
+              '• Ensuring you are using HTTPS (required for location on mobile)';
+            showLocAlert(alertMsg, 'danger');
+          }
+          setLocStatus('❌ ' + errorMsg);
+        }, 
+        { 
+          enableHighAccuracy: true, 
+          maximumAge: 60000,  // Accept cached location up to 1 minute old
+          timeout: 20000  // Increased timeout to 20 seconds
+        }
+      );
+    }
+    
+    // Don't auto-request location - wait for user click
+    const requestLocBtn = document.getElementById('requestLocBtn');
+    if (requestLocBtn) {
+      requestLocBtn.addEventListener('click', function(){
+        getLoc();
+      });
+      
+      // Check if permission is already granted and auto-request location
+      checkAndRequestIfGranted().catch(err => {
+        console.log('Error checking permission:', err);
+      });
+    }
+    
+    if (retryLocBtn) { 
+      retryLocBtn.addEventListener('click', getLoc); 
+    }
+
+    // Face verification
+    {% if require_face %}
+    const rollInput = document.getElementById('rollInput');
+    const rollStatus = document.getElementById('rollStatus');
+    const camVideo = document.getElementById('camVideo');
+    const startCamBtn = document.getElementById('startCamBtn');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const verSpin = document.getElementById('verSpin');
+    const verText = document.getElementById('verText');
+    const faceStatus = document.getElementById('faceStatus');
+    const snapCanvas = document.getElementById('snapCanvas');
+    let stream = null;
+    let enrolledRolls = [];
+
+    async function fetchEnrolled(){
+      try{
+        const r = await fetch('{{ url_for('api_enrolled_rolls') }}');
+        const js = await r.json();
+        enrolledRolls = Array.isArray(js.rolls) ? js.rolls : [];
+        const dl = document.getElementById('enrolledList');
+        if (dl){
+          dl.innerHTML = '';
+          enrolledRolls.forEach(r => { const o = document.createElement('option'); o.value = r; dl.appendChild(o); });
+        }
+        updateFaceUIReady();
+      }catch(e){ enrolledRolls = []; }
+    }
+
+    function _norm(s){ return (s || '').trim().toLowerCase().replace(/\s+/g, ''); }
+    function _digits(s){ return (s || '').replace(/\D/g, ''); }
+
+    function updateFaceUIReady(){
+      const roll = rollInput.value.trim();
+      const rn = _norm(roll);
+      const rd = _digits(rn);
+      const enrolled = enrolledRolls.some(r => {
+        const rnorm = _norm(r);
+        if (rnorm === rn) return true;
+        const rdig = _digits(rnorm);
+        if (rd && rdig && rd === rdig) return true;
+        if (rnorm.startsWith(rn) || rn.startsWith(rnorm)) return true;
+        return false;
+      });
+      if (rollStatus){
+        if (!roll) rollStatus.textContent = '';
+        else rollStatus.textContent = enrolled ? 'Roll enrolled' : 'Roll not enrolled (check spelling)';
+      }
+      // Allow verification even if roll is not yet in the enrolled list; server will validate.
+      verifyBtn.disabled = !(stream && roll.length > 0);
+    }
+    rollInput.addEventListener('input', updateFaceUIReady);
+
+    startCamBtn.addEventListener('click', async function(){
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+        camVideo.srcObject = stream;
+        faceStatus.textContent = 'Camera started. Position your face and click Verify Face.';
+        updateFaceUIReady();
+      }catch(e){
+        faceStatus.textContent = 'Camera error: ' + e.message;
+      }
+    });
+
+    verifyBtn.addEventListener('click', async function(){
+      if(!stream){ faceStatus.textContent = 'Start camera first.'; return; }
+      const ctx = snapCanvas.getContext('2d');
+      const vw = camVideo.videoWidth || 640;
+      const vh = camVideo.videoHeight || 480;
+      const targetW = 360;
+      const targetH = Math.round(vh * (targetW / vw));
+      snapCanvas.width = targetW;
+      snapCanvas.height = targetH;
+      ctx.drawImage(camVideo, 0, 0, targetW, targetH);
+      const dataUrl = snapCanvas.toDataURL('image/jpeg', 0.7);
+      faceStatus.textContent = 'Verifying face...';
+      verifyBtn.disabled = true; verText.textContent = 'Verifying...'; verSpin.classList.remove('d-none');
+      try{
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 15000);
+        const form = new FormData();
+        form.append('lid', '{{ lecture_id }}');
+        form.append('roll_no', rollInput.value.trim());
+        form.append('image', dataUrl);
+        const resp = await fetch('{{ url_for('face_verify') }}', { method: 'POST', body: form, headers: { 'Accept': 'application/json' }, signal: ctl.signal });
+        clearTimeout(timer);
+        const text = await resp.text();
+        let js = null;
+        try { js = JSON.parse(text); } catch(parseErr) { throw new Error('Non-JSON response (' + resp.status + '): ' + text.slice(0, 120)); }
+        if(js.ok){
+          faceTokenEl.value = js.face_token;
+          hasFace = true;
+          const confText = (typeof js.confidence === 'number') ? js.confidence.toFixed(2) : js.confidence;
+          faceStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Face verified successfully! Similarity: ' + confText;
+          if (js.canonical_roll){ rollInput.value = js.canonical_roll; updateFaceUIReady(); }
+          // Try to submit immediately if location and fields are ready
+          updateSubmitState();
+          setTimeout(updateSubmitState, 100);
+          
+          // Hide camera and show success state
+          if(stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+          }
+          camVideo.style.display = 'none';
+          startCamBtn.style.display = 'none';
+          verifyBtn.style.display = 'none';
+          
+          // Show success message
+          const successDiv = document.createElement('div');
+          successDiv.className = 'alert alert-success text-center';
+          successDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>Face verification completed successfully!';
+          camVideo.parentNode.insertBefore(successDiv, camVideo);
+          
+        }else{
+          hasFace = false;
+          faceTokenEl.value = '';
+          const reason = js.reason || 'unknown';
+          if (reason === 'unknown_roll' && Array.isArray(js.enrolled)){
+            faceStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-warning me-2"></i>Unknown roll. Enrolled: ' + js.enrolled.join(', ');
+          } else if (reason === 'index_empty'){
+            faceStatus.innerHTML = '<i class="fas fa-info-circle text-info me-2"></i>No enrolled faces found. Ask faculty to add photos and reload faces.';
+          } else if (reason === 'model_not_ready'){
+            faceStatus.innerHTML = '<i class="fas fa-clock text-warning me-2"></i>Model not ready. Server is downloading/initializing models. Try again in a moment.';
+          } else if (reason === 'no_face_detected'){
+            faceStatus.innerHTML = '<i class="fas fa-user-times text-danger me-2"></i>No face detected. Ensure good lighting and keep your face inside the frame.';
+          } else if (reason === 'low_similarity'){
+            faceStatus.innerHTML = '<i class="fas fa-times-circle text-danger me-2"></i>Face mismatch. Use the correct roll or enroll clearer photos.';
+          } else if (reason === 'server_error'){
+            faceStatus.innerHTML = '<i class="fas fa-exclamation-circle text-danger me-2"></i>Server error while verifying. Please try again.';
+          } else {
+            faceStatus.innerHTML = '<i class="fas fa-times-circle text-danger me-2"></i>Face not verified: ' + reason;
+          }
+        }
+        updateSubmitState();
+      }catch(e){
+        hasFace = false;
+        faceTokenEl.value = '';
+        faceStatus.textContent = 'Verification error: ' + (e.name === 'AbortError' ? 'Timed out. Try again.' : e.message);
+        updateSubmitState();
+      }
+      verifyBtn.disabled = false; verText.textContent = 'Verify Face'; verSpin.classList.add('d-none');
+    });
+    fetchEnrolled();
+    {% endif %}
+  </script>
+  {% endif %}
+{% endblock %}

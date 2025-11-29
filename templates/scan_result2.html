@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Attendance Result - Proxy Scan{% endblock %}
+{% block content %}
+<div class="text-center mb-4">
+  {% if status == 'Present' %}
+    <i class="fas fa-check-circle mb-3" style="font-size: 4rem; color: var(--success);"></i>
+    <h1 class="display-5 fw-bold text-success">Attendance Marked</h1>
+  {% else %}
+    <i class="fas fa-times-circle mb-3" style="font-size: 4rem; color: var(--danger);"></i>
+    <h1 class="display-5 fw-bold text-danger">Attendance {{ status }}</h1>
+  {% endif %}
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="mb-0">
+      <i class="fas fa-chalkboard me-2"></i>{{ lecture.lectureName }}
+    </h5>
+  </div>
+  <div class="card-body">
+    <p class="card-text">
+      <i class="fas fa-door-open me-2"></i><strong>Room:</strong> {{ lecture.roomNo }}
+    </p>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="mb-0">
+      <i class="fas fa-user me-2"></i>Student Details
+    </h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-sm-6">
+        <p><strong>Name:</strong> {{ name }}</p>
+        <p><strong>Roll No:</strong> {{ roll_no }}</p>
+      </div>
+      <div class="col-sm-6">
+        <p><strong>Distance:</strong> {{ distance_m|round(2) }} m</p>
+        <p><strong>GPS Accuracy:</strong> ±{{ accuracy|round(1) }} m</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if status == 'Rejected' %}
+  <div class="alert alert-danger d-flex align-items-center">
+    <i class="fas fa-exclamation-triangle me-3"></i>
+    <div>
+      <strong>Out of Range</strong><br>
+      You are too far from the lecture location. Please move closer and try again.
+    </div>
+  </div>
+{% else %}
+  <div class="alert alert-success d-flex align-items-center">
+    <i class="fas fa-check-circle me-3"></i>
+    <div>
+      <strong>Success!</strong><br>
+      Your attendance has been recorded successfully.
+    </div>
+  </div>
+{% endif %}
+
+<div class="text-center">
+  <a href="{{ url_for('index') }}" class="btn btn-primary">
+    <i class="fas fa-home me-2"></i>Back to Home
+  </a>
+</div>
+{% endblock %}

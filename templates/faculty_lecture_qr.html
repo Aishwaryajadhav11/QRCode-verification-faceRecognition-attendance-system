@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Lecture QR</h1>
+<div class="mb-3">
+<div><strong>Lecture:</strong> {{ lecture.lectureName }}</div>
+<div><strong>Room:</strong> {{ lecture.roomNo }}</div>
+<div><strong>Lat:</strong> {{ lecture.lat }}, <strong>Lng:</strong> {{ lecture.lng }}</div>
+<div><strong>Scan URL:</strong> <a href="{{ scan_url }}" target="_blank">{{ scan_url }}</a></div>
+</div>
+<img src="data:image/png;base64,{{ qr_b64 }}" alt="QR Code">
+{% endblock %}

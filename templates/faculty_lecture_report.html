@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Lecture Report</h1>
+<div class="mb-3">
+  <div><strong>ID:</strong> {{ lecture_id }}</div>
+  <div><strong>Name:</strong> {{ lecture.lectureName }}</div>
+  <div><strong>Room:</strong> {{ lecture.roomNo }}</div>
+  <div><strong>Date:</strong> {{ lecture.date }} {{ lecture.time }}</div>
+  <div><strong>Location:</strong> {{ lecture.lat }}, {{ lecture.lng }}</div>
+</div>
+<div class="row mb-3">
+  <div class="col">
+    <div class="card"><div class="card-body"><strong>Present</strong><div class="display-6">{{ present_count }}</div></div></div>
+  </div>
+  <div class="col">
+    <div class="card"><div class="card-body"><strong>Rejected</strong><div class="display-6">{{ rejected_count }}</div></div></div>
+  </div>
+</div>
+<div class="d-flex gap-2 mb-3">
+  <a class="btn btn-outline-primary" href="{{ url_for('lecture_qr', lecture_id=lecture_id) }}">Show QR</a>
+  <a class="btn btn-outline-secondary" href="{{ url_for('list_lectures') }}">Back to Lectures</a>
+  <a class="btn btn-success" href="{{ url_for('export_lecture_attendance', lecture_id=lecture_id) }}">Export Excel</a>
+</div>
+<div class="table-responsive">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Roll No</th>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Distance (m)</th>
+        <th>Accuracy (m)</th>
+        <th>Timestamp</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for roll, rec in records.items() %}
+      <tr>
+        <td>{{ roll }}</td>
+        <td>{{ rec.name }}</td>
+        <td>{{ rec.status }}</td>
+        <td>{{ '%.2f'|format(rec.distanceMeters) }}</td>
+        <td>{{ '%.1f'|format(rec.accuracy) }}</td>
+        <td>{{ rec.timestamp }}</td>
+        <td>
+          <form method="post" action="{{ url_for('delete_attendance_record', lecture_id=lecture_id, roll_no=roll) }}" onsubmit="return confirm('Delete record for {{ roll }}?');">
+            <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

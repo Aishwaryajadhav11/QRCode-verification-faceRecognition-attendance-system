@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Proxy Scan - Smart Attendance System{% endblock %}
+{% block content %}
+<div class="text-center mb-5">
+  <div class="mb-4">
+    <i class="fas fa-qrcode" style="font-size: 4rem; color: var(--brand-3);"></i>
+  </div>
+  <h1 class="display-4 fw-bold mb-3">Proxy Scan</h1>
+  <p class="lead mb-4 text-muted">Smart Location-Verified QR Code Attendance System</p>
+  <p class="mb-5">Secure, fast, and reliable attendance tracking with GPS verification and face recognition</p>
+</div>
+
+<div class="row g-4 mb-5">
+  <div class="col-md-4">
+    <div class="card h-100 text-center">
+      <div class="card-body">
+        <i class="fas fa-mobile-alt mb-3" style="font-size: 2.5rem; color: var(--brand);"></i>
+        <h5 class="card-title">Mobile Friendly</h5>
+        <p class="card-text">Scan QR codes from any device. Works seamlessly on phones, tablets, and desktops.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 text-center">
+      <div class="card-body">
+        <i class="fas fa-map-marker-alt mb-3" style="font-size: 2.5rem; color: var(--brand-2);"></i>
+        <h5 class="card-title">GPS Verification</h5>
+        <p class="card-text">Ensures students are physically present at the lecture location for accurate attendance.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 text-center">
+      <div class="card-body">
+        <i class="fas fa-user-check mb-3" style="font-size: 2.5rem; color: var(--brand-3);"></i>
+        <h5 class="card-title">Face Recognition</h5>
+        <p class="card-text">Optional biometric verification to prevent proxy attendance and ensure authenticity.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="text-center">
+  <h3 class="mb-4">Get Started</h3>
+  <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+    <a class="btn btn-primary btn-lg px-4" href="{{ url_for('admin_login') }}">
+      <i class="fas fa-user-shield me-2"></i>Admin Login
+    </a>
+    <a class="btn btn-outline-secondary btn-lg px-4" href="{{ url_for('faculty_login') }}">
+      <i class="fas fa-chalkboard-teacher me-2"></i>Faculty Login
+    </a>
+    <a class="btn btn-outline-primary btn-lg px-4" href="{{ url_for('faculty_signup') }}">
+      <i class="fas fa-user-plus me-2"></i>Faculty Signup
+    </a>
+  </div>
+  <div class="mt-4">
+    <a class="btn btn-link" href="{{ url_for('student_enroll') }}">
+      <i class="fas fa-camera me-1"></i>Enroll Your Face
+    </a>
+  </div>
+</div>
+
+<hr class="divider my-5">
+
+<div class="row text-center">
+  <div class="col-md-3">
+    <h4 class="text-primary">Secure</h4>
+    <p class="text-muted">End-to-end encrypted data with secure token-based authentication</p>
+  </div>
+  <div class="col-md-3">
+    <h4 class="text-primary">Fast</h4>
+    <p class="text-muted">Quick QR scanning with instant attendance marking and real-time updates</p>
+  </div>
+  <div class="col-md-3">
+    <h4 class="text-primary">Reliable</h4>
+    <p class="text-muted">Cloud-based storage with automatic backups and export capabilities</p>
+  </div>
+  <div class="col-md-3">
+    <h4 class="text-primary">Smart</h4>
+    <p class="text-muted">AI-powered face recognition with intelligent location verification</p>
+  </div>
+</div>
+{% endblock %}

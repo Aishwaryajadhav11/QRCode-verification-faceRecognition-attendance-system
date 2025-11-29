@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Faculty Signup</h1>
+{% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+<form method="post" action="{{ url_for('faculty_signup_post') }}">
+  <div class="mb-3">
+    <label class="form-label">Name</label>
+    <input type="text" class="form-control" name="name" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Email</label>
+    <input type="email" class="form-control" name="email" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Password</label>
+    <input type="password" class="form-control" name="password" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Confirm Password</label>
+    <input type="password" class="form-control" name="confirm_password" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Sign Up</button>
+  <a href="{{ url_for('faculty_login') }}" class="btn btn-link">Already have an account? Login</a>
+  <a href="{{ url_for('index') }}" class="btn btn-link">Back</a>
+</form>
+{% endblock %}

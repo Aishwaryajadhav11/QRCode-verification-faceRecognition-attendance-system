@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="m-0">Lectures</h1>
+  <div>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('faculty_logout') }}">Logout</a>
+  </div>
+</div>
+<a class="btn btn-primary mb-3" href="{{ url_for('new_lecture') }}">Create Lecture</a>
+{% if not lectures %}
+  <div class="alert alert-info">No lectures yet.</div>
+{% else %}
+  <form class="row g-2 mb-3" method="get" action="{{ url_for('list_lectures') }}">
+    <div class="col-md-2">
+      <label for="filter-start-date" class="form-label mb-1">Start Date</label>
+      <input id="filter-start-date" type="date" class="form-control form-control-sm" name="start_date" value="{{ request.args.get('start_date', '') }}">
+    </div>
+    <div class="col-md-2">
+      <label for="filter-end-date" class="form-label mb-1">End Date</label>
+      <input id="filter-end-date" type="date" class="form-control form-control-sm" name="end_date" value="{{ request.args.get('end_date', '') }}">
+    </div>
+    <div class="col-md-2">
+      <label for="filter-subject" class="form-label mb-1">Subject</label>
+      <input id="filter-subject" type="text" class="form-control form-control-sm" name="subject" placeholder="Search subject" value="{{ request.args.get('subject', '') }}">
+    </div>
+    <div class="col-md-2">
+      <label for="filter-start-time" class="form-label mb-1">Start Time</label>
+      <input id="filter-start-time" type="time" class="form-control form-control-sm" name="start_time" value="{{ request.args.get('start_time', '') }}">
+    </div>
+    <div class="col-md-2">
+      <label for="filter-end-time" class="form-label mb-1">End Time</label>
+      <input id="filter-end-time" type="time" class="form-control form-control-sm" name="end_time" value="{{ request.args.get('end_time', '') }}">
+    </div>
+    <div class="col-md-2 d-flex align-items-end gap-2">
+      <button class="btn btn-sm btn-primary" type="submit">Filter</button>
+      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('list_lectures') }}">Reset</a>
+    </div>
+  </form>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Lecture ID</th>
+          <th>Name</th>
+          <th>Room</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>End Time</th>
+          <th>Lat</th>
+          <th>Lng</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lid, lec in lectures.items() %}
+        <tr>
+          <td>{{ lec.lectureId or lid }}</td>
+          <td>{{ lec.lectureName }}</td>
+          <td>{{ lec.roomNo }}</td>
+          <td>{{ lec.date }}</td>
+          <td>{{ lec.time }}</td>
+          <td>{{ lec.end_time }}</td>
+          <td>{{ '%.6f'|format(lec.lat) }}</td>
+          <td>{{ '%.6f'|format(lec.lng) }}</td>
+          <td class="d-flex gap-1">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('lecture_qr', lecture_id=lid) }}">QR</a>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('lecture_report', lecture_id=lid) }}">Report</a>
+            <form method="post" action="{{ url_for('delete_lecture', lecture_id=lid) }}" onsubmit="return confirm('Delete lecture {{ lec.lectureName }}?');">
+              <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+{% endblock %}

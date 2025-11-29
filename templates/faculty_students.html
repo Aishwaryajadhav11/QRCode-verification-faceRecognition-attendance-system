@@ -1,0 +1,609 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.camera-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.image-upload-container {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.image-upload-container:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+.image-upload-container.dragover {
+    border-color: #0d6efd;
+    background-color: #e7f3ff;
+}
+
+.image-upload-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.image-upload-icon {
+    font-size: 3rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.image-preview {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    border: 2px solid #dee2e6;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-preview-remove {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.upload-progress {
+    margin-top: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+    height: 8px;
+    overflow: hidden;
+}
+
+.upload-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #0d6efd, #0dcaf0);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+</style>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="m-0">Students</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('list_lectures') }}">Lectures</a>
+    <a class="btn btn-success" href="{{ url_for('faculty_students_export') }}">Export Excel</a>
+  </div>
+</div>
+<div class="card mb-4">
+  <div class="card-header">Add Student</div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('faculty_students_create') }}">
+      <div class="row g-2">
+        <div class="col-md-3">
+          <input type="text" name="roll_no" class="form-control" placeholder="Roll No" required>
+        </div>
+        <div class="col-md-4">
+          <input type="text" name="name" class="form-control" placeholder="Name" required>
+        </div>
+        <div class="col-md-4">
+          <input type="email" name="email" class="form-control" placeholder="Email (optional)">
+        </div>
+        <div class="col-md-1 d-grid">
+          <button class="btn btn-primary" type="submit">Add</button>
+        </div>
+      </div>
+      <div class="form-text mt-2">
+        To enroll faces, put photos under <code>data/faces/&lt;roll_no&gt;/</code> and then reload faces from the scan page, or restart the server.
+      </div>
+    </form>
+  </div>
+</div>
+{% if not students %}
+  <div class="alert alert-info">No students yet.</div>
+{% else %}
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Roll No</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r, s in students.items() %}
+        <tr>
+          <td>{{ s.rollNo or r }}</td>
+          <td>{{ s.name }}</td>
+          <td>{{ s.email }}</td>
+          <td>
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn btn-sm btn-outline-primary" onclick="openUploadModal('{{ s.rollNo or r }}', '{{ s.name }}'); return false;" type="button">
+                <i class="fas fa-camera me-1"></i>Upload Faces
+              </button>
+              <form method="post" action="{{ url_for('faculty_students_delete', roll=s.rollNo or r) }}" onsubmit="return confirm('Delete {{ s.rollNo or r }}?');" class="d-inline">
+                <button class="btn btn-sm btn-outline-danger" type="submit">
+                  <i class="fas fa-trash me-1"></i>Delete
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-user-plus me-2"></i>Student Face Enrollment
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <strong>Student:</strong> <span id="modalStudentName"></span> (<span id="modalStudentRoll"></span>)
+        </div>
+        
+        <!-- Student Enrollment Options -->
+        <div class="alert alert-info mb-3">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Instructions for Student:</strong> Choose one of the two options below to enroll your face for attendance verification.
+        </div>
+        
+        <ul class="nav nav-tabs mb-3" id="uploadTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-upload" type="button" role="tab">
+              <i class="fas fa-upload me-2"></i>1. Upload Your Photos
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera-capture" type="button" role="tab">
+              <i class="fas fa-camera me-2"></i>2. Live Camera Capture
+            </button>
+          </li>
+        </ul>
+        
+        <div class="tab-content" id="uploadTabContent">
+          <!-- Student Photo Upload Tab -->
+          <div class="tab-pane fade show active" id="file-upload" role="tabpanel">
+            <div class="card">
+              <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-upload me-2"></i>Upload Your Face Photos</h6>
+                <p class="card-text text-muted">Student: Please select 2-3 clear photos of your face from your device.</p>
+                
+                <form method="post" enctype="multipart/form-data" id="uploadForm">
+                  <div class="image-upload-container" id="modalUploadArea">
+                    <input type="file" class="image-upload-input" name="photos" accept="image/jpeg,image/png,image/jpg" multiple required id="modalPhotoInput">
+                    <div class="image-upload-content">
+                      <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                      <h5>Select Your Photos</h5>
+                      <p class="text-muted mb-2">Click here to browse your files or drag & drop</p>
+                      <small class="text-muted">JPG, PNG • Clear face photos • 2-3 photos recommended</small>
+                    </div>
+                  </div>
+                  
+                  <!-- Image Preview Area -->
+                  <div class="image-preview-container" id="modalPreviewContainer"></div>
+                  
+                  <!-- Upload Progress -->
+                  <div class="upload-progress" id="modalUploadProgress" style="display: none;">
+                    <div class="upload-progress-bar" id="modalUploadProgressBar"></div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Student Live Camera Capture Tab -->
+          <div class="tab-pane fade" id="camera-capture" role="tabpanel">
+            <div class="card">
+              <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-camera me-2"></i>Live Camera Capture</h6>
+                <p class="card-text text-muted">Student: Use your laptop camera to take a live photo of yourself.</p>
+                
+                <div class="camera-container">
+                  <div class="ratio ratio-4x3 mb-3" style="background:#000; border-radius: 0.375rem; overflow: hidden;">
+                    <video id="cameraVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
+                  </div>
+                  
+                  <div class="d-flex gap-2 mb-3 justify-content-center">
+                    <button class="btn btn-primary" id="startCameraBtn" type="button">
+                      <i class="fas fa-video me-2"></i>Start Camera
+                    </button>
+                    <button class="btn btn-success" id="captureBtn" type="button" disabled>
+                      <i class="fas fa-camera me-2"></i>Capture
+                    </button>
+                    <button class="btn btn-outline-secondary" id="stopCameraBtn" type="button" disabled>
+                      <i class="fas fa-stop me-2"></i>Stop
+                    </button>
+                  </div>
+                  
+                  <div id="cameraStatus" class="text-center text-muted mb-3">
+                    <i class="fas fa-info-circle me-2"></i>Click "Start Camera" to begin. Position your face clearly in the frame.
+                  </div>
+                  
+                  <!-- Captured Image Preview -->
+                  <div id="capturedImageContainer" style="display: none;">
+                    <div class="alert alert-success">
+                      <h6 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Photo Captured!</h6>
+                      <p class="mb-0">Review your photo below. If you're happy with it, click "Save". Otherwise, click "Recapture".</p>
+                    </div>
+                    
+                    <div class="text-center mb-3">
+                      <img id="capturedImage" class="img-thumbnail" style="max-width: 400px; max-height: 300px; border: 3px solid #198754;">
+                    </div>
+                    
+                    <div class="d-flex gap-2 justify-content-center">
+                      <button class="btn btn-outline-warning" id="retakeBtn" type="button">
+                        <i class="fas fa-redo me-2"></i>Recapture
+                      </button>
+                      <button class="btn btn-success" id="saveCaptureBtn" type="button">
+                        <i class="fas fa-save me-2"></i>Save Photo
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <canvas id="captureCanvas" width="640" height="480" class="d-none"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="modalSubmitBtn" disabled onclick="submitUpload()">
+          <i class="fas fa-upload me-2"></i>Upload Photos
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentRoll = '';
+let modalSelectedFiles = [];
+let cameraStream = null;
+let capturedImageData = null;
+
+// Make sure function is globally available
+window.openUploadModal = function(roll, name) {
+    console.log('Opening upload modal for:', roll, name);
+    currentRoll = roll;
+    
+    // Check if elements exist
+    const rollEl = document.getElementById('modalStudentRoll');
+    const nameEl = document.getElementById('modalStudentName');
+    
+    if (rollEl) rollEl.textContent = roll;
+    if (nameEl) nameEl.textContent = name || 'Unknown';
+    
+    // Reset modal state
+    modalSelectedFiles = [];
+    
+    const previewContainer = document.getElementById('modalPreviewContainer');
+    const submitBtn = document.getElementById('modalSubmitBtn');
+    const uploadProgress = document.getElementById('modalUploadProgress');
+    
+    if (previewContainer) previewContainer.innerHTML = '';
+    if (submitBtn) submitBtn.disabled = true;
+    if (uploadProgress) uploadProgress.style.display = 'none';
+    
+    // Reset camera state
+    if (typeof resetCameraState === 'function') {
+        resetCameraState();
+    }
+    
+    // Reset upload area
+    const uploadArea = document.getElementById('modalUploadArea');
+    if (uploadArea) {
+        const uploadContent = uploadArea.querySelector('.image-upload-content');
+        if (uploadContent) {
+            uploadContent.innerHTML = `
+                <i class="fas fa-cloud-upload-alt image-upload-icon"></i>
+                <h5>Drag & Drop Photos Here</h5>
+                <p class="text-muted mb-2">or click to browse files</p>
+                <small class="text-muted">JPG, PNG • Max 10MB each • Multiple photos recommended</small>
+            `;
+        }
+    }
+    
+    // Show modal
+    try {
+        const modalEl = document.getElementById('uploadModal');
+        if (modalEl) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        } else {
+            console.error('Modal element not found');
+        }
+    } catch (error) {
+        console.error('Error opening modal:', error);
+    }
+}
+
+window.submitUpload = function() {
+    if (modalSelectedFiles.length === 0) {
+        alert('Please select at least one photo to upload.');
+        return;
+    }
+    
+    const form = document.getElementById('uploadForm');
+    form.action = `/faculty/students/${currentRoll}/upload_face`;
+    
+    // Update file input with selected files
+    const dt = new DataTransfer();
+    modalSelectedFiles.forEach(file => dt.items.add(file));
+    document.getElementById('modalPhotoInput').files = dt.files;
+    
+    // Show progress
+    document.getElementById('modalUploadProgress').style.display = 'block';
+    document.getElementById('modalSubmitBtn').disabled = true;
+    document.getElementById('modalSubmitBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+    
+    // Simulate progress
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        document.getElementById('modalUploadProgressBar').style.width = progress + '%';
+    }, 200);
+    
+    // Submit form
+    setTimeout(() => {
+        clearInterval(progressInterval);
+        document.getElementById('modalUploadProgressBar').style.width = '100%';
+        form.submit();
+    }, 1000);
+}
+
+// Modal drag and drop functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const modalUploadArea = document.getElementById('modalUploadArea');
+    const modalPhotoInput = document.getElementById('modalPhotoInput');
+    const modalPreviewContainer = document.getElementById('modalPreviewContainer');
+    const modalSubmitBtn = document.getElementById('modalSubmitBtn');
+    
+    // Drag and drop functionality
+    modalUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        modalUploadArea.classList.add('dragover');
+    });
+    
+    modalUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        modalUploadArea.classList.remove('dragover');
+    });
+    
+    modalUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        modalUploadArea.classList.remove('dragover');
+        const files = Array.from(e.dataTransfer.files);
+        handleModalFiles(files);
+    });
+    
+    // File input change
+    modalPhotoInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        handleModalFiles(files);
+    });
+    
+    function handleModalFiles(files) {
+        // Filter image files
+        const imageFiles = files.filter(file => {
+            return file.type.startsWith('image/') && 
+                   (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg');
+        });
+        
+        // Add to selected files
+        modalSelectedFiles = [...modalSelectedFiles, ...imageFiles];
+        
+        // Update preview
+        updateModalPreview();
+        
+        // Update submit button
+        updateModalSubmitButton();
+    }
+    
+    function updateModalPreview() {
+        modalPreviewContainer.innerHTML = '';
+        
+        modalSelectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'image-preview';
+                previewDiv.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview ${index + 1}">
+                    <button type="button" class="image-preview-remove" onclick="removeModalImage(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                modalPreviewContainer.appendChild(previewDiv);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // Update upload area text
+        if (modalSelectedFiles.length > 0) {
+            const uploadContent = modalUploadArea.querySelector('.image-upload-content');
+            uploadContent.innerHTML = `
+                <i class="fas fa-images image-upload-icon text-success"></i>
+                <h5>${modalSelectedFiles.length} Photo(s) Selected</h5>
+                <p class="text-muted mb-2">Great! Click to add more photos or proceed to upload</p>
+                <small class="text-muted">JPG, PNG • Clear face photos work best</small>
+            `;
+        }
+    }
+    
+    function updateModalSubmitButton() {
+        modalSubmitBtn.disabled = modalSelectedFiles.length === 0;
+        if (modalSelectedFiles.length > 0) {
+            modalSubmitBtn.innerHTML = `<i class="fas fa-upload me-2"></i>Upload ${modalSelectedFiles.length} Photo(s) for Enrollment`;
+        } else {
+            modalSubmitBtn.innerHTML = `<i class="fas fa-upload me-2"></i>Upload Your Photos`;
+        }
+    }
+    
+    // Global function to remove images
+    window.removeModalImage = function(index) {
+        modalSelectedFiles.splice(index, 1);
+        updateModalPreview();
+        updateModalSubmitButton();
+    };
+    
+    // Camera functionality
+    const cameraVideo = document.getElementById('cameraVideo');
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    const stopCameraBtn = document.getElementById('stopCameraBtn');
+    const cameraStatus = document.getElementById('cameraStatus');
+    const capturedImageContainer = document.getElementById('capturedImageContainer');
+    const capturedImage = document.getElementById('capturedImage');
+    const captureCanvas = document.getElementById('captureCanvas');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const saveCaptureBtn = document.getElementById('saveCaptureBtn');
+    
+    function resetCameraState() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        capturedImageData = null;
+        startCameraBtn.disabled = false;
+        captureBtn.disabled = true;
+        stopCameraBtn.disabled = true;
+        cameraStatus.innerHTML = '<i class="fas fa-info-circle me-2"></i>Click "Start Camera" to begin. Position your face clearly in the frame.';
+        capturedImageContainer.style.display = 'none';
+        cameraVideo.srcObject = null;
+    }
+    
+    startCameraBtn.addEventListener('click', async function() {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, 
+                audio: false 
+            });
+            cameraVideo.srcObject = cameraStream;
+            startCameraBtn.disabled = true;
+            captureBtn.disabled = false;
+            stopCameraBtn.disabled = false;
+            cameraStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Camera ready! Position your face clearly in the frame and click "Capture".';
+        } catch (e) {
+            cameraStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-danger me-2"></i>Camera error: ' + e.message + '. Please allow camera access and try again.';
+        }
+    });
+    
+    captureBtn.addEventListener('click', function() {
+        const ctx = captureCanvas.getContext('2d');
+        const vw = cameraVideo.videoWidth || 640;
+        const vh = cameraVideo.videoHeight || 480;
+        captureCanvas.width = vw;
+        captureCanvas.height = vh;
+        ctx.drawImage(cameraVideo, 0, 0, vw, vh);
+        
+        capturedImageData = captureCanvas.toDataURL('image/jpeg', 0.8);
+        capturedImage.src = capturedImageData;
+        capturedImageContainer.style.display = 'block';
+        cameraStatus.innerHTML = '<i class="fas fa-camera text-success me-2"></i>Photo captured successfully! Review your image below.';
+    });
+    
+    retakeBtn.addEventListener('click', function() {
+        capturedImageData = null;
+        capturedImageContainer.style.display = 'none';
+        cameraStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Camera ready! Position your face clearly and click "Capture".';
+    });
+    
+    saveCaptureBtn.addEventListener('click', async function() {
+        if (!capturedImageData) {
+            alert('No image captured to save.');
+            return;
+        }
+        
+        saveCaptureBtn.disabled = true;
+        saveCaptureBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        
+        try {
+            const formData = new FormData();
+            formData.append('camera_image', capturedImageData);
+            
+            const response = await fetch(`/faculty/students/${currentRoll}/upload_face`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.ok) {
+                cameraStatus.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Your face photo has been saved successfully! Enrollment complete.';
+                // Hide capture controls and show success
+                document.getElementById('capturedImageContainer').innerHTML = `
+                    <div class="alert alert-success text-center">
+                        <h5><i class="fas fa-check-circle me-2"></i>Enrollment Successful!</h5>
+                        <p class="mb-0">Your face has been enrolled for attendance verification.</p>
+                    </div>
+                `;
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+                    location.reload();
+                }, 2000);
+            } else {
+                cameraStatus.innerHTML = '<i class="fas fa-exclamation-circle text-danger me-2"></i>Error saving photo: ' + (result.error || 'Please try again');
+            }
+        } catch (e) {
+            cameraStatus.innerHTML = '<i class="fas fa-exclamation-circle text-danger me-2"></i>Network error: ' + e.message + '. Please check your connection and try again.';
+        } finally {
+            saveCaptureBtn.disabled = false;
+            saveCaptureBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Photo';
+        }
+    });
+    
+    stopCameraBtn.addEventListener('click', function() {
+        resetCameraState();
+    });
+    
+    // Stop camera when modal is closed
+    document.getElementById('uploadModal').addEventListener('hidden.bs.modal', function() {
+        resetCameraState();
+    });
+});
+</script>
+
+{% endblock %}
