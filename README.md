@@ -1,2 +1,2 @@
-##Smadt attendence monitoring system using face recognition and Qr verification 
+## Smart attendence monitoring system using face recognition and Qr verification 
 
