@@ -41,16 +41,56 @@ AI attendance system, QR code attendance, face recognition attendance, automated
 | **Deployment**    | Heroku / AWS / Local Server                 | Hosting and running the application                 |
 
 ## 📁 Project Structure
-```markdown
+```
 Smart-Attendance-System/
-├── README.md
-├── report/
+│── README.md
+│── report/
 │   └── Smart_Attendance_Report.pdf
-├── src/
+│── src/
 │   ├── qr_scanner/
 │   ├── face_recognition/
 │   ├── database/
 │   └── main.py
-├── requirements.txt
+│── requirements.txt
 └── LICENSE
+```
+
+## ⚙️ Installation & Setup
+
+### 1️⃣ Clone Repository
+```bash
+git clone https://github.com/yourusername/smart-attendance-system.git
+cd smart-attendance-system
+```
+
+### 2️⃣ Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3️⃣ Run Application
+```bash
+python main.py
+```
+## 🤝 Contributors
+![Contributors](https://img.shields.io/badge/Contributors-3-blueviolet?style=for-the-badge)
+
+Thanks to everyone who contributed to this project:
+
+| Name             | Role                       | GitHub Profile                                   |
+|-----------------|----------------------------|-------------------------------------------------|
+| Your Name       | Project Lead / Developer   | [GitHub](https://github.com/yourusername)      |
+| Collaborator 1  | Backend / AI Integration   | [GitHub](https://github.com/collab1)           |
+| Collaborator 2  | Frontend / UI Design       | [GitHub](https://github.com/collab2)           |
+
+## 📬 Contact & Contribution
+
+If you have questions, suggestions, or want to contribute to the project, feel free to reach out:
+
+- **GitHub Issues:** [Open an issue](https://github.com/Aishwaryajadhav11/QRCode-verification-faceRecognition-attendance-system/issues)  
+- **Pull Requests:** [Submit a PR](https://github.com/Aishwaryajadhav11/QRCode-verification-faceRecognition-attendance-system/pulls)  
+- **Email:** your.email@example.com  
+
+We welcome contributions to enhance features, fix bugs, or improve documentation.
+
 
