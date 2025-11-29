@@ -1,10 +1,23 @@
 # 🎯 Smart Attendance System using QR verification & Face Recognition
 
 <p align="center">
+  <!-- Project Badge -->
   <img src="https://img.shields.io/badge/Project-AI%20Attendance%20System-blue?style=for-the-badge&logo=appveyor&logoColor=white" alt="Project Badge">
+  
+  <!-- Tech Badge -->
   <img src="https://img.shields.io/badge/Tech-Python%20%7C%20AI%20%7C%20OpenCV-orange?style=for-the-badge&logo=python&logoColor=white" alt="Tech Badge">
+  
+  <!-- QR & Face Recognition -->
   <img src="https://img.shields.io/badge/Face-Recognition-success?style=for-the-badge&logo=opencv&logoColor=white" alt="Face Recognition Badge">
+  
+  <!-- Status Badge -->
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge&logo=github&logoColor=white" alt="Status Badge">
+  
+  <!-- License Badge -->
+  <img src="https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License Badge">
+  
+  <!-- Contributors Badge -->
+  <img src="https://img.shields.io/badge/Contributors-3-blueviolet?style=for-the-badge" alt="Contributors Badge">
 </p>
 
 ---
@@ -39,6 +52,24 @@ AI attendance system, QR code attendance, face recognition attendance, automated
 | **Database**      | Firebase / MySQL / MongoDB                  | Stores attendance records, user data, and logs      |
 | **Version Control** | Git / GitHub                               | Source code management and collaboration            |
 | **Deployment**    | Heroku / AWS / Local Server                 | Hosting and running the application                 |
+<p align="center">
+  <a href="https://www.python.org/">
+    <img src="https://img.icons8.com/color/96/000000/python.png" alt="Python" width="50" height="50"/>
+  </a>
+  <a href="https://opencv.org/">
+    <img src="https://img.icons8.com/color/96/000000/opencv.png" alt="OpenCV" width="50" height="50"/>
+  </a>
+  <a href="https://www.tensorflow.org/">
+    <img src="https://img.icons8.com/color/96/000000/tensorflow.png" alt="TensorFlow" width="50" height="50"/>
+  </a>
+  <a href="https://firebase.google.com/">
+    <img src="https://img.icons8.com/color/96/000000/firebase.png" alt="Firebase" width="50" height="50"/>
+  </a>
+  <a href="https://aws.amazon.com/">
+    <img src="https://img.icons8.com/color/96/000000/amazon-web-services.png" alt="AWS" width="50" height="50"/>
+  </a>
+</p>
+
 
 ## 📁 Project Structure
 ```
@@ -83,10 +114,7 @@ Fast dual authentication (QR + face).
 Clean logs and analytics dashboards.  
 
 Suitable for schools, colleges, offices, and events.
-### 🖼️ Screenshot
-<p align="center">
-  <img src="images/" alt="Output Screenshot" width="600"/>
-</p>
+
 
 ## 🌟 Future Enhancements
 
