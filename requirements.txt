@@ -1,0 +1,13 @@
+flask
+python-dotenv
+openpyxl
+werkzeug
+
+supabase
+
+face-recognition
+numpy
+opencv-python
+insightface
+
+qrcode
