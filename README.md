@@ -72,24 +72,48 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+## 📊 Output & Results
+
+Real-time attendance tracking using AI and QR code.
+
+Secure and proxy-proof verification.  
+
+Fast dual authentication (QR + face).  
+
+Clean logs and analytics dashboards.  
+
+Suitable for schools, colleges, offices, and events.
+### 🖼️ Screenshot
+<p align="center">
+  <img src="images/" alt="Output Screenshot" width="600"/>
+</p>
+
+## 🌟 Future Enhancements
+
+Mobile application integration (Android/iOS)
+
+AI-based spoof detection for face recognition
+
+RFID/NFC attendance integration
+
+Cloud-based analytics dashboard with graphs
 ## 🤝 Contributors
 ![Contributors](https://img.shields.io/badge/Contributors-3-blueviolet?style=for-the-badge)
 
 Thanks to everyone who contributed to this project:
-
-| Name             | Role                       | GitHub Profile                                   |
-|-----------------|----------------------------|-------------------------------------------------|
-| Your Name       | Project Lead / Developer   | [GitHub](https://github.com/yourusername)      |
-| Collaborator 1  | Backend / AI Integration   | [GitHub](https://github.com/collab1)           |
-| Collaborator 2  | Frontend / UI Design       | [GitHub](https://github.com/collab2)           |
-
+                     | Name             | GitHub Profile                                   |
+|-----------------|-------------------------------------------------|
+| ![Aishwarya Jadhav](https://img.icons8.com/ios-glyphs/24/000000/github.png) Your Name       | [GitHub](https://github.com/Aishwaryajadhav11)      |
+| ![Collaborator 1](https://img.icons8.com/ios-glyphs/24/000000/github.png) Collaborator 1  | [GitHub](https://github.com/Gayatrip-26)           |
+| ![Collaborator 2](https://img.icons8.com/ios-glyphs/24/000000/github.png) Collaborator 2  | [GitHub](https://github.com/Ruchita1205)           |
+                                           
 ## 📬 Contact & Contribution
 
 If you have questions, suggestions, or want to contribute to the project, feel free to reach out:
 
 - **GitHub Issues:** [Open an issue](https://github.com/Aishwaryajadhav11/QRCode-verification-faceRecognition-attendance-system/issues)  
 - **Pull Requests:** [Submit a PR](https://github.com/Aishwaryajadhav11/QRCode-verification-faceRecognition-attendance-system/pulls)  
-- **Email:** your.email@example.com  
+- **Email:** aishwaryajadhav56952@gmail.com  
 
 We welcome contributions to enhance features, fix bugs, or improve documentation.
 
