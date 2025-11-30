@@ -32,6 +32,8 @@ This system eliminates proxy attendance and provides real-time monitoring.
 
 ✔ Multi-user support (Admin, Faculty, Student)
 
+---
+
 ## 📁 **Project Structure**
 
 ```Smart-Attendance-System/
@@ -67,7 +69,7 @@ This system eliminates proxy attendance and provides real-time monitoring.
 ├── LICENSE                     # Project license  
 └── README.md                   # Documentation```
 
-
+---
 
 | Category          | Technologies Used                                     |
 |------------------|--------------------------------------------------------|
