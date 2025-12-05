@@ -254,8 +254,7 @@ If you want to **collaborate** or **reach out**:
 
 - **Email:** aishwaryajadhav56952@gmail.com  
 - **GitHub Issues:** Open an issue in this repo  
-- **LinkedIn:**  www.linkedin.com/in/
-aishwarya-jadhav-081344289
+- **LinkedIn:**  www.linkedin.com/in/aishwarya-jadhav-081344289
 
   
 
