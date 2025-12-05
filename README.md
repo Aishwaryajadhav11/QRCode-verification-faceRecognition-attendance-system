@@ -71,6 +71,8 @@ This system eliminates proxy attendance and provides real-time monitoring.
 ```
 ---
 
+## Tech Stack
+
 | Category          | Technologies Used                                     |
 |------------------|--------------------------------------------------------|
 | Programming Lang | Python, JavaScript                                     |
@@ -82,3 +84,30 @@ This system eliminates proxy attendance and provides real-time monitoring.
 | Cloud / Hosting  | Supabase, Cloudflare Tunnel, Ngrok                     |
 | Tools            | Git, GitHub, VS Code                                   |
 | Environment      | Virtualenv, Python 3.10+                               |
+
+---
+
+# 🛠️ Installation & Setup Guide – Smart Attendance System (QR + Face Recognition)
+
+## ✅ 1. Prerequisites
+Make sure the following are installed:
+- Python 3.8+
+- Git
+- XAMPP / MySQL (if database used)
+- Webcam
+
+## 📌 Install Required Software
+- Python: https://www.python.org/downloads/
+- Git: https://git-scm.com/
+- XAMPP: https://www.apachefriends.org/
+
+---
+
+## ✅ 2. Clone the Project
+```bash
+git clone https://github.com/your-username/smart-attendance-system.git
+cd smart-attendance-system
+
+---
+
+## ✅ 3. Create Virtual Environment
