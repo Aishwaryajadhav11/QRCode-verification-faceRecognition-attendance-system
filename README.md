@@ -109,5 +109,92 @@ git clone https://github.com/your-username/smart-attendance-system.git
 cd smart-attendance-system
 
 ---
+```
+## ✳️ 3. Create Virtual Environment
+```bash
+python -m venv venv
 
-## ✅ 3. Create Virtual Environment
+---
+
+### Activate:
+
+**Windows**
+
+```bash
+venv\Scripts\activate
+```
+
+**Mac/Linux**
+
+```bash
+source venv/bin/activate
+```
+
+---
+
+## ✅ 4. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+pip install opencv-python
+pip install face-recognition
+pip install numpy
+pip install pillow
+pip install pyzbar
+pip install qrcode
+```
+
+---
+
+## ✅ 5. Database Setup (MySQL)
+
+1. Open **phpMyAdmin**
+2. Create Database:
+
+```sql
+CREATE DATABASE attendance_system;
+```
+
+3. Import your `.sql` file in phpMyAdmin
+4. Update DB config in **config.py**:
+
+```python
+DB_HOST = "localhost"
+DB_USER = "root"
+DB_PASS = ""
+DB_NAME = "attendance_system"
+```
+
+---
+
+## ✅ 6. Run the Application
+
+```bash
+python app.py
+```
+
+Visit:
+
+```
+http://127.0.0.1:5000
+```
+
+---
+
+## ✅ 7. Using the System
+
+### 📸 Face Recognition
+
+* Register student faces
+* System encodes & stores
+* Webcam auto-detects
+* Attendance marked automatically
+
+### 📱 QR Code Scanning
+
+* Generate QR for each student
+* Scan QR through webcam
+* Attendance stored instantly
+
+---
+
