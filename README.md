@@ -70,7 +70,7 @@ This system eliminates proxy attendance and provides real-time monitoring.
 └── README.md                   # Documentation```
 ```
 ---
-🚀 ## techstack
+
 | Category          | Technologies Used                                     |
 |------------------|--------------------------------------------------------|
 | Programming Lang | Python, JavaScript                                     |
