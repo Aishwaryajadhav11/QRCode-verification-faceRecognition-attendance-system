@@ -68,7 +68,7 @@ This system eliminates proxy attendance and provides real-time monitoring.
 ├── .gitignore                  # Git ignore rules  
 ├── LICENSE                     # Project license  
 └── README.md                   # Documentation```
-
+```
 ---
 
 | Category          | Technologies Used                                     |
